@@ -241,10 +241,6 @@ class CuttingAppMobile {
         const fieldEl = document.querySelector(selector);
         if (fieldEl) fieldEl.classList.add('active');
 
-        if (field === 'qty') {
-            this.setKeypadVisibility(false);
-            return;
-        }
 
         // Clear field on click as requested
         this.inputValues[field] = '';
