@@ -255,7 +255,8 @@ class CuttingAppMobile {
             this.setKeypadVisibility(true);
 
             // Update Keypad Header
-            const label = field === 'width' ? '가로' : (field === 'height' ? '세로' : '값 입력');
+            const labels = { width: '가로', height: '세로', qty: '개수' };
+            const label = labels[field] || '값 입력';
             const labelEl = document.getElementById('keypadFieldLabel');
             if (labelEl) labelEl.textContent = label;
             this.updateKeypadPreview('');
@@ -299,7 +300,7 @@ class CuttingAppMobile {
                 if (realEl) realEl.value = value;
             }
         } else {
-            const displayId = field === 'qty' ? 'displayQty' : `input${field.charAt(0).toUpperCase() + field.slice(1)}`;
+            const displayId = `input${field.charAt(0).toUpperCase() + field.slice(1)}`;
             const element = document.getElementById(displayId);
             if (element) {
                 element.textContent = value || '';
@@ -349,9 +350,15 @@ class CuttingAppMobile {
                 return;
 
             case 'done':
-                // UI Enhancement: Auto-transition width → height → close
-                if (this.currentStep === 2 && this.currentField === 'width') {
-                    this.selectField('height', false, true);
+                // UI2: Auto-transition width → height → qty → close
+                if (this.currentStep === 2) {
+                    if (this.currentField === 'width') {
+                        this.selectField('height', false, true);
+                    } else if (this.currentField === 'height') {
+                        this.selectField('qty', false, true);
+                    } else {
+                        this.setKeypadVisibility(false);
+                    }
                 } else {
                     this.setKeypadVisibility(false);
                 }
@@ -681,11 +688,32 @@ class CuttingAppMobile {
         const boardW = parseInt(document.getElementById('boardWidth').value);
         const boardH = parseInt(document.getElementById('boardHeight').value);
 
-        this.renderer.render(boardW, boardH, bin.placed, this.kerf);
+        const legend = this.renderer.render(boardW, boardH, bin.placed, this.kerf);
 
         // Update indicator
         document.getElementById('boardIndicator').textContent =
             `${this.currentBoardIndex + 1} / ${this.lastResult.bins.length}`;
+
+        // UI2: Display legend for small parts
+        this.updateLegend(legend);
+    }
+
+    updateLegend(legend) {
+        const container = document.getElementById('legendSection');
+        if (!container) return;
+
+        if (!legend || legend.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const circles = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+        const items = legend.map(l => {
+            const circle = circles[l.num - 1] || `(${l.num})`;
+            return `${circle} ${l.width}×${l.height} ×${l.count}`;
+        }).join('   ');
+
+        container.innerHTML = `<span class="legend-title">범례</span> ${items}`;
     }
 
     navigateBoard(delta) {

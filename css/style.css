@@ -1003,6 +1003,23 @@ body {
     color: #00D4AA;
 }
 
+.legend-section {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    color: #ccc;
+    text-align: left;
+    line-height: 1.6;
+}
+
+.legend-title {
+    font-weight: 700;
+    color: #fff;
+    margin-right: var(--space-sm);
+}
+
 .canvas-controls {
     display: flex;
     justify-content: center;

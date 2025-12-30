@@ -16,6 +16,7 @@ class CuttingRenderer {
 
     /**
      * 재단 결과 렌더링
+     * Returns legend array for small parts
      */
     render(binWidth, binHeight, placedItems, kerf = 0) {
         const scale = this.calculateScale(binWidth, binHeight);
@@ -33,13 +34,38 @@ class CuttingRenderer {
         // 원판 그리기
         this.drawBoard(binWidth, binHeight, scale);
 
+        // UI2: Build sizeMap for small parts (< 200x200)
+        const sizeMap = {};
+        const legend = [];
+        let numCounter = 1;
+        const sizeCounts = {};
+
+        placedItems.forEach(item => {
+            const w = item.isRotated ? item.height : item.width;
+            const h = item.isRotated ? item.width : item.height;
+            const key = `${w}x${h}`;
+
+            if (w < 200 && h < 200) {
+                if (sizeMap[key] === undefined) {
+                    sizeMap[key] = numCounter;
+                    legend.push({ num: numCounter, width: w, height: h, count: 0 });
+                    numCounter++;
+                }
+                // Count occurrences
+                const legendItem = legend.find(l => l.num === sizeMap[key]);
+                if (legendItem) legendItem.count++;
+            }
+        });
+
         // 부품들 그리기
         placedItems.forEach((item, index) => {
-            this.drawPart(item, scale, index);
+            this.drawPart(item, scale, index, sizeMap);
         });
 
         // 치수 표시
         this.drawDimensions(binWidth, binHeight, scale);
+
+        return legend;
     }
 
     calculateScale(binWidth, binHeight) {
@@ -152,7 +178,7 @@ class CuttingRenderer {
         this.ctx.restore();
     }
 
-    drawPart(item, scale, index) {
+    drawPart(item, scale, index, sizeMap = {}) {
         const x = this.padding + item.x * scale;
         const y = this.padding + item.y * scale;
         const w = (item.isRotated ? item.height : item.width) * scale;
@@ -180,20 +206,35 @@ class CuttingRenderer {
         this.ctx.fillStyle = '#00D4AA';
         this.ctx.fillRect(x + 1, y + 1, Math.min(10, w), 2);
 
-        // Label
+        // UI2 Hybrid Display: small parts (<200x200) show number, large parts show size
         const originalW = item.isRotated ? item.height : item.width;
         const originalH = item.isRotated ? item.width : item.height;
-        const label = `${originalW}×${originalH}`;
+        const isSmall = originalW < 200 && originalH < 200;
 
-        if (w > 20 && h > 20) {
+        if (w > 15 && h > 15) {
             this.ctx.fillStyle = '#333333';
-            this.ctx.font = `bold ${Math.max(12, 16 * scale)}px Inter, sans-serif`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(label, x + w / 2, y + h / 2);
+
+            if (isSmall && sizeMap[`${originalW}x${originalH}`] !== undefined) {
+                // Small part: show circled number
+                const num = sizeMap[`${originalW}x${originalH}`];
+                this.ctx.font = `bold ${Math.max(10, 14 * scale)}px Inter, sans-serif`;
+                this.ctx.fillText(this.getCircledNumber(num), x + w / 2, y + h / 2);
+            } else {
+                // Large part: show dimensions
+                const label = `${originalW}×${originalH}`;
+                this.ctx.font = `bold ${Math.max(12, 16 * scale)}px Inter, sans-serif`;
+                this.ctx.fillText(label, x + w / 2, y + h / 2);
+            }
         }
 
         this.ctx.restore();
+    }
+
+    getCircledNumber(num) {
+        const circles = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+        return circles[num - 1] || `(${num})`;
     }
 
     drawDimensions(width, height, scale) {

@@ -116,11 +116,10 @@
 
                     <div class="input-separator-x">×</div>
 
-                    <!-- Vertical Stepper -->
-                    <div class="vertical-stepper">
-                        <button class="v-step-btn plus" onclick="app.changeQty(1)">+</button>
-                        <div class="v-step-value" id="displayQty">1</div>
-                        <button class="v-step-btn minus" onclick="app.changeQty(-1)">−</button>
+                    <!-- Quantity Input (Keypad) -->
+                    <div class="input-box-compact qty-box" data-field="qty">
+                        <span class="box-value" id="inputQty">1</span>
+                        <span class="box-unit">개</span>
                     </div>
 
                     <!-- Grain Toggle Card -->
@@ -205,6 +204,9 @@
                     </div>
 
                     <div class="efficiency-text">배치 효율 <span class="efficiency-val" id="statEfficiency">0%</span></div>
+
+                    <!-- UI2: Legend for small parts -->
+                    <div class="legend-section" id="legendSection"></div>
                 </div>
             </div>
 
