@@ -29,28 +29,20 @@ class CuttingAppMobile {
     }
 
     bindEvents() {
-        // Logo and Navigation Tabs
-        document.querySelector('.logo')?.addEventListener('click', () => this.goToStep(1));
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => this.goToStep(parseInt(e.currentTarget.dataset.step)));
-        });
-
-        // Step Navigation Buttons
+        // Step Navigation
         document.getElementById('toStep2Btn')?.addEventListener('click', () => this.goToStep(2));
+        document.getElementById('toStep1Btn')?.addEventListener('click', () => this.goToStep(1));
         document.getElementById('backToInputBtn')?.addEventListener('click', () => this.goToStep(2));
-        document.getElementById('homeBtn')?.addEventListener('click', () => {
-            if (confirm('모든 데이터가 초기화됩니다. 새 작업을 시작할까요?')) {
-                this.resetAll();
-            }
+
+        // Preset Cards
+        document.querySelectorAll('.preset-card:not(.add-preset)').forEach(card => {
+            card.addEventListener('click', (e) => this.selectPreset(e.currentTarget));
         });
 
         // Board Selection (Step 1)
         document.querySelectorAll('[data-board-field]').forEach(field => {
             field.addEventListener('click', (e) => this.selectField(e.currentTarget.dataset.boardField, true, true));
         });
-
-        // Step 1 Grain Toggle
-        document.getElementById('boardRotatable')?.addEventListener('change', () => this.updateBoardGrainUI());
 
         // Compact Input Boxes (Step 2)
         document.querySelectorAll('.input-box-compact[data-field]').forEach(box => {
@@ -67,7 +59,8 @@ class CuttingAppMobile {
             key.addEventListener('click', (e) => this.handleKeyPress(e.currentTarget.dataset.key));
         });
 
-        // Keypad Overlay
+        // Keypad Done Button
+        document.getElementById('keypadDone')?.addEventListener('click', () => this.setKeypadVisibility(false));
         document.getElementById('keypadOverlay')?.addEventListener('click', (e) => {
             if (e.target.id === 'keypadOverlay') this.setKeypadVisibility(false);
         });
@@ -78,13 +71,26 @@ class CuttingAppMobile {
         // Clear All Parts
         document.getElementById('clearAllBtn')?.addEventListener('click', () => this.clearParts());
 
-        // Board Navigation (Step 3)
+        // Board Navigation
         document.getElementById('prevBoard')?.addEventListener('click', () => this.navigateBoard(-1));
         document.getElementById('nextBoard')?.addEventListener('click', () => this.navigateBoard(1));
 
-        // Share & PDF
+        // PDF Download
+        document.getElementById('downloadPdfBtn')?.addEventListener('click', () => this.downloadPDF());
+
+        // Share
         document.getElementById('shareBtn')?.addEventListener('click', () => this.share());
-        document.getElementById('viewPdfBtn')?.addEventListener('click', () => this.viewPDF());
+
+        // Debug Event (Logo click)
+        document.querySelector('.logo')?.addEventListener('click', () => this.debug());
+
+        // Step 1: Settings Sync
+        ['boardWidth', 'boardHeight', 'boardThickness', 'kerfInput'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => this.updateSettingsSummary());
+        });
+
+        // Step 2: Add Part Button
+        document.getElementById('addPartBtn')?.addEventListener('click', () => this.addPart());
     }
 
     // ============================================
@@ -92,11 +98,6 @@ class CuttingAppMobile {
     // ============================================
 
     goToStep(step) {
-        if (step === 3 && this.parts.length === 0) {
-            alert('먼저 부품을 한 개 이상 추가해 주세요.');
-            return;
-        }
-
         const prevStep = this.currentStep;
         this.currentStep = step;
 
@@ -106,29 +107,41 @@ class CuttingAppMobile {
         });
 
         const targetScreen = document.getElementById(`step${step}`);
-        if (targetScreen) targetScreen.classList.add('active');
-
-        // Update Nav Active State
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.toggle('active', parseInt(item.dataset.step) === step);
-        });
-
-        // Initialize Step 1
-        if (step === 1) {
-            this.updateBoardGrainUI();
-            this.setKeypadVisibility(false);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
         }
 
-        // Initialize Step 2
+        // Mark previous screens
+        for (let i = 1; i < step; i++) {
+            const prevScreen = document.getElementById(`step${i}`);
+            if (prevScreen) prevScreen.classList.add('prev');
+        }
+
+        this.updateStepIndicator();
+
+        // Initialize Step 1: Hide keypad initially
+        if (step === 1) {
+            this.setKeypadVisibility(false);
+            document.querySelectorAll('.input-field').forEach(f => f.classList.remove('active'));
+            this.currentField = 'boardWidth';
+        }
+
+        // Initialize Step 2 from Step 1
         if (step === 2 && prevStep === 1) {
             this.resetInputFields();
+        }
+
+        // Initialize Step 2 from Step 3 (No reset, just hide keypad)
+        if (step === 2 && prevStep === 3) {
+            this.setKeypadVisibility(false);
+            document.querySelectorAll('.input-box-compact').forEach(f => f.classList.remove('active'));
         }
 
         if (step === 2) {
             this.updateGrainUI();
         }
 
-        // Initialize Step 3
+        // Initialize Step 3: Hide keypad
         if (step === 3) {
             this.setKeypadVisibility(false);
         }
@@ -320,14 +333,7 @@ class CuttingAppMobile {
                 return;
 
             case 'done':
-                // Auto-sequence flow logic
-                if (this.currentField === 'width') {
-                    this.selectField('height', false, true);
-                } else if (this.currentField === 'height') {
-                    this.setKeypadVisibility(false);
-                } else {
-                    this.setKeypadVisibility(false);
-                }
+                this.setKeypadVisibility(false);
                 return;
 
             case '00':
@@ -472,156 +478,155 @@ class CuttingAppMobile {
             return;
         }
 
-        this.showToast('부품을 먼저 추가해 주세요.', 'error');
-        return;
-    }
+        let boardW = parseInt(document.getElementById('boardWidth').value);
+        let boardH = parseInt(document.getElementById('boardHeight').value);
+        const thickness = parseInt(document.getElementById('boardThickness').value);
+        const preCutting = document.getElementById('preCutting')?.checked ?? false;
 
-        this.showToast('최적화 계산 중...', 'info');
+        // Apply pre-cutting logic (12mm each side = 24mm total)
+        if (preCutting) {
+            boardW -= 24;
+            boardH -= 24;
+        }
 
-// Capture settings
-const boardW = parseInt(document.getElementById('boardWidth').value);
-const boardH = parseInt(document.getElementById('boardHeight').value);
-this.kerf = parseInt(document.getElementById('kerfInput').value) || 4;
+        // Use packer
+        const packer = new GuillotinePacker(boardW, boardH, this.kerf);
+        const result = packer.pack(this.parts);
 
-try {
-    // Simplified packing call for demonstration
-    this.lastResult = this.packer.optimize(boardW, boardH, this.parts, this.kerf);
+        this.lastResult = result;
+        this.currentBoardIndex = 0;
 
-    this.goToStep(3);
-    this.currentBoardIndex = 0;
-    this.renderResult();
+        // Calculate stats
+        const totalCuts = result.bins.reduce((sum, bin) => sum + (bin.cuttingCount || 0), 0);
+        const cost = this.calculateCuttingCost(thickness, totalCuts, preCutting, result.bins.length);
+        const efficiency = result.totalEfficiency || 0;
 
-    // Update UI Summary Bar Icons
-    const totalCuts = this.lastResult.totalCuts || 0;
-    const totalBoards = this.lastResult.boards.length;
-    const totalCost = (totalBoards * 15000) + (totalCuts * 500); // Sample price logic
+        // Update UI
+        document.getElementById('statCost').textContent = cost.toLocaleString() + '원';
+        document.getElementById('statCuts').textContent = totalCuts + '회';
+        document.getElementById('statBoards').textContent = result.bins.length + '장';
+        document.getElementById('statEfficiency').textContent = efficiency.toFixed(1) + '%';
 
-    document.getElementById('resCost').textContent = totalCost.toLocaleString() + '원';
-    document.getElementById('resCuts').textContent = totalCuts.toLocaleString() + '회';
-    document.getElementById('resBoards').textContent = totalBoards.toLocaleString() + '장';
+        // Results page labels
+        const boardSizeLabel = document.getElementById('boardSizeLabel');
+        if (boardSizeLabel) boardSizeLabel.textContent = `${boardW} × ${boardH} mm`;
 
-} catch (error) {
-    console.error(error);
-    this.showToast('계산 도중 오류가 발생했습니다.', 'error');
-}
-const boardSizeLabel = document.getElementById('boardSizeLabel');
-if (boardSizeLabel) boardSizeLabel.textContent = `${boardW} × ${boardH} mm`;
-
-// Render canvas
-this.renderResult();
+        // Render canvas
+        this.renderResult();
 
         // Go to Step 3
+        this.goToStep(3);
     }
 
-calculateCuttingCost(thickness, totalCuts, isPreCut, binCount) {
-    let costPerCut = 1000;
-    if (thickness >= 13 && thickness <= 23) {
-        costPerCut = 1500;
-    } else if (thickness >= 24) {
-        costPerCut = 2000;
-    }
-    return totalCuts * costPerCut;
-}
-
-renderResult() {
-    if (!this.lastResult || this.lastResult.bins.length === 0) return;
-
-    const bin = this.lastResult.bins[this.currentBoardIndex];
-    const canvas = document.getElementById('resultCanvas');
-    if (!canvas) return;
-
-    // Initialize renderer if needed
-    if (!this.renderer) {
-        this.renderer = new CuttingRenderer('resultCanvas');
+    calculateCuttingCost(thickness, totalCuts, isPreCut, binCount) {
+        let costPerCut = 1000;
+        if (thickness >= 13 && thickness <= 23) {
+            costPerCut = 1500;
+        } else if (thickness >= 24) {
+            costPerCut = 2000;
+        }
+        return totalCuts * costPerCut;
     }
 
-    const boardW = parseInt(document.getElementById('boardWidth').value);
-    const boardH = parseInt(document.getElementById('boardHeight').value);
+    renderResult() {
+        if (!this.lastResult || this.lastResult.bins.length === 0) return;
 
-    this.renderer.render(boardW, boardH, bin.placed, this.kerf);
+        const bin = this.lastResult.bins[this.currentBoardIndex];
+        const canvas = document.getElementById('resultCanvas');
+        if (!canvas) return;
 
-    // Update indicator
-    document.getElementById('boardIndicator').textContent =
-        `${this.currentBoardIndex + 1} / ${this.lastResult.bins.length}`;
-}
+        // Initialize renderer if needed
+        if (!this.renderer) {
+            this.renderer = new CuttingRenderer('resultCanvas');
+        }
 
-navigateBoard(delta) {
-    if (!this.lastResult) return;
-    const newIndex = this.currentBoardIndex + delta;
-    if (newIndex >= 0 && newIndex < this.lastResult.bins.length) {
-        this.currentBoardIndex = newIndex;
-        this.renderResult();
-    }
-}
+        const boardW = parseInt(document.getElementById('boardWidth').value);
+        const boardH = parseInt(document.getElementById('boardHeight').value);
 
-// ============================================
-// Export & Share
-// ============================================
+        this.renderer.render(boardW, boardH, bin.placed, this.kerf);
 
-downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const canvas = document.getElementById('resultCanvas');
-
-    doc.setFontSize(20);
-    doc.text('Wood Cutter 재단 도면', 20, 20);
-
-    doc.setFontSize(12);
-    doc.text(`원판: ${document.getElementById('boardWidth').value} x ${document.getElementById('boardHeight').value}`, 20, 30);
-    doc.text(`비용: ${document.getElementById('statCost').textContent}`, 20, 38);
-    doc.text(`효율: ${document.getElementById('statEfficiency').textContent}`, 20, 46);
-
-    if (canvas) {
-        const imgData = canvas.toDataURL('image/png');
-        doc.addImage(imgData, 'PNG', 20, 60, 170, 0);
+        // Update indicator
+        document.getElementById('boardIndicator').textContent =
+            `${this.currentBoardIndex + 1} / ${this.lastResult.bins.length}`;
     }
 
-    doc.save(`woodcutter-result-${Date.now()}.pdf`);
-    this.showToast('PDF 다운로드가 시작되었습니다', 'success');
-}
+    navigateBoard(delta) {
+        if (!this.lastResult) return;
+        const newIndex = this.currentBoardIndex + delta;
+        if (newIndex >= 0 && newIndex < this.lastResult.bins.length) {
+            this.currentBoardIndex = newIndex;
+            this.renderResult();
+        }
+    }
 
-share() {
-    const cost = document.getElementById('statCost').textContent;
-    const cuts = document.getElementById('statCuts').textContent;
-    const shareText = `[대장간 V3] 재단 결과\n💰 예상 비용: ${cost}\n✂️ 절단 횟수: ${cuts}\n\n도면 결과가 이미지로 공유되었습니다.`;
+    // ============================================
+    // Export & Share
+    // ============================================
 
-    // If Web Share API supports files (png from canvas)
-    const canvas = document.getElementById('resultCanvas');
-    if (navigator.share && canvas) {
-        canvas.toBlob((blob) => {
-            const file = new File([blob], 'result.png', { type: 'image/png' });
-            navigator.share({
-                files: [file],
-                title: '대장간 V3 재단 결과',
-                text: shareText,
-            }).catch(() => {
-                // Fallback to text
+    downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const canvas = document.getElementById('resultCanvas');
+
+        doc.setFontSize(20);
+        doc.text('Wood Cutter 재단 도면', 20, 20);
+
+        doc.setFontSize(12);
+        doc.text(`원판: ${document.getElementById('boardWidth').value} x ${document.getElementById('boardHeight').value}`, 20, 30);
+        doc.text(`비용: ${document.getElementById('statCost').textContent}`, 20, 38);
+        doc.text(`효율: ${document.getElementById('statEfficiency').textContent}`, 20, 46);
+
+        if (canvas) {
+            const imgData = canvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', 20, 60, 170, 0);
+        }
+
+        doc.save(`woodcutter-result-${Date.now()}.pdf`);
+        this.showToast('PDF 다운로드가 시작되었습니다', 'success');
+    }
+
+    share() {
+        const cost = document.getElementById('statCost').textContent;
+        const cuts = document.getElementById('statCuts').textContent;
+        const shareText = `[대장간 V3] 재단 결과\n💰 예상 비용: ${cost}\n✂️ 절단 횟수: ${cuts}\n\n도면 결과가 이미지로 공유되었습니다.`;
+
+        // If Web Share API supports files (png from canvas)
+        const canvas = document.getElementById('resultCanvas');
+        if (navigator.share && canvas) {
+            canvas.toBlob((blob) => {
+                const file = new File([blob], 'result.png', { type: 'image/png' });
                 navigator.share({
+                    files: [file],
                     title: '대장간 V3 재단 결과',
                     text: shareText,
+                }).catch(() => {
+                    // Fallback to text
+                    navigator.share({
+                        title: '대장간 V3 재단 결과',
+                        text: shareText,
+                    });
                 });
             });
-        });
-    } else {
-        // Very simple fallback for desktop or older browsers
-        navigator.clipboard.writeText(shareText);
-        this.showToast('결과가 클립보드에 복사되었습니다 (카톡/메세지에 붙여넣으세요)', 'success');
+        } else {
+            // Very simple fallback for desktop or older browsers
+            navigator.clipboard.writeText(shareText);
+            this.showToast('결과가 클립보드에 복사되었습니다 (카톡/메세지에 붙여넣으세요)', 'success');
+        }
     }
-}
 
-// ============================================
-// Utilities
-// ============================================
+    // ============================================
+    // Utilities
+    // ============================================
 
-showToast(message, type = 'info') {
-    // Simple toast implementation
-    const existing = document.querySelector('.toast');
-    if (existing) existing.remove();
+    showToast(message, type = 'info') {
+        // Simple toast implementation
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
 
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
             position: fixed;
             bottom: 100px;
             left: 50%;
@@ -636,57 +641,31 @@ showToast(message, type = 'info') {
             animation: fadeInUp 0.3s ease;
         `;
 
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
-}
-
-// ============================================
-// Debugging
-// ============================================
-
-updateBoardGrainUI() {
-    const checkbox = document.getElementById('boardRotatable');
-    const pattern = document.querySelector('.grain-pattern');
-    const label = document.querySelector('.board-label');
-    if (!checkbox || !pattern || !label) return;
-
-    if (checkbox.checked) {
-        pattern.classList.remove('active');
-        label.textContent = '자유 회전';
-    } else {
-        pattern.classList.add('active');
-        label.textContent = '결 고정';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
     }
-}
 
-resetAll() {
-    this.parts = [];
-    this.results = null;
-    this.renderPartsList();
-    this.goToStep(1);
-}
+    // ============================================
+    // Debugging
+    // ============================================
 
-viewPDF() {
-    alert('PDF 미리보기 기능을 준비 중입니다.');
-}
+    debug() {
+        console.group('/debug - Application State');
+        console.log('Current Step:', this.currentStep);
+        console.log('Current Field:', this.currentField);
+        console.log('Input Values:', { ...this.inputValues });
+        console.log('Parts:', [...this.parts]);
+        console.log('Last Result:', this.lastResult);
+        console.log('Board Specs:', {
+            width: document.getElementById('boardWidth')?.value,
+            height: document.getElementById('boardHeight')?.value,
+            thickness: document.getElementById('boardThickness')?.value,
+            kerf: this.kerf
+        });
+        console.groupEnd();
 
-debug() {
-    console.group('/debug - Application State');
-    console.log('Current Step:', this.currentStep);
-    console.log('Current Field:', this.currentField);
-    console.log('Input Values:', { ...this.inputValues });
-    console.log('Parts:', [...this.parts]);
-    console.log('Last Result:', this.lastResult);
-    console.log('Board Specs:', {
-        width: document.getElementById('boardWidth')?.value,
-        height: document.getElementById('boardHeight')?.value,
-        thickness: document.getElementById('boardThickness')?.value,
-        kerf: this.kerf
-    });
-    console.groupEnd();
-
-    this.showToast('디버그 정보가 콘솔에 출력되었습니다', 'success');
-}
+        this.showToast('디버그 정보가 콘솔에 출력되었습니다', 'success');
+    }
 }
 
 // Initialize App
