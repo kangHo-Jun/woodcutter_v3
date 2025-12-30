@@ -75,62 +75,57 @@ body {
     position: relative;
 }
 
+/* Unified Header & Tab Navigation */
 .app-header {
-    height: 56px;
-    padding: 0 var(--space-md);
+    height: 8%;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 var(--space-md);
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
 .logo {
-    font-weight: 700;
-    font-size: var(--font-lg);
+    font-size: 20px;
+    font-weight: 800;
     letter-spacing: -0.02em;
     cursor: pointer;
 }
 
-.version {
+.v-badge {
     background: var(--primary);
     color: var(--bg-main);
-    padding: 2px 6px;
+    font-size: 10px;
+    padding: 2px 4px;
     border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-left: 6px;
     vertical-align: middle;
 }
 
-/* Step Indicator */
-.step-indicator {
+.step-nav {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
 }
 
-.step {
-    font-size: 12px;
-    font-weight: 600;
+.nav-item {
+    font-size: 14px;
+    font-weight: 700;
     color: var(--text-dim);
-    transition: color 0.3s;
+    cursor: pointer;
+    transition: color 0.2s;
 }
 
-.step.active {
+.nav-item.active {
     color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
-.step.done {
-    color: var(--text-muted);
-}
-
-.step-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--text-dim);
+.nav-separator {
+    color: var(--border);
+    font-size: 12px;
 }
 
 /* ============================================
@@ -213,101 +208,204 @@ body {
 
 /* ============================================
    Step 1: Board Size (Refined)
-   ============================================ */
-
-.section-subtitle {
-    font-size: 16px;
-    margin-top: var(--space-xs);
+   ============================================*/
+/* Step 1: Simplified Settings */
+#step1 .screen-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-xl) var(--space-lg);
 }
 
-.board-input-row {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-md);
+.setting-group-main {
+    width: 100%;
     margin-bottom: var(--space-xl);
 }
 
-.board-input-row .input-field {
-    flex: 1;
-    max-width: 150px;
-}
-
-.input-separator-x {
+.section-title {
     font-size: 24px;
-    font-weight: 700;
-    color: var(--text-dim);
+    font-weight: 800;
+    margin-bottom: 8px;
 }
 
-/* Removed Grain Preview */
+.section-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: var(--space-xl);
+}
 
-.grain-preview-caption {
+.input-display.board-input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.input-field-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.input-field-mini {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.field-val {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.field-unit {
     font-size: 14px;
     color: var(--text-dim);
 }
 
-.section-label {
+.field-lbl {
     font-size: 12px;
-    font-weight: 600;
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-sm);
+    font-weight: 600;
+    margin-top: 4px;
 }
 
-.preset-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-sm);
+.input-sep {
+    color: var(--text-muted);
+    font-weight: 700;
+    margin: 0 var(--space-md);
+}
+
+.grain-setting-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
     margin-bottom: var(--space-lg);
 }
 
-.preset-card {
-    background: var(--bg-card);
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: var(--touch-min);
+.grain-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
 }
 
-.preset-card:active {
-    transform: scale(0.98);
+.grain-icon {
+    font-size: 24px;
 }
 
-.preset-card.active {
-    border-color: var(--primary);
-    background: rgba(0, 212, 170, 0.1);
-}
-
-.preset-card.add-preset {
-    border-style: dashed;
+.grain-text {
     display: flex;
     flex-direction: column;
+}
+
+.grain-title {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.grain-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--primary);
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+/* Board Preview Area */
+.board-preview-area {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-lg);
+}
+
+.board-canvas-mini {
+    width: 200px;
+    height: 120px;
+    background: #333;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
+    border: 1px solid var(--border);
 }
 
-.preset-icon {
-    font-size: var(--font-xl);
-    margin-bottom: var(--space-xs);
+.grain-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
-.preset-name {
-    display: block;
-    font-size: var(--font-sm);
-    font-weight: 600;
-    color: var(--text-main);
-    margin-bottom: 4px;
+.grain-pattern.active {
+    background-image: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 8px,
+            rgba(255, 255, 255, 0.05) 8px,
+            rgba(255, 255, 255, 0.05) 12px);
 }
 
-.preset-size {
+.board-label {
+    position: relative;
+    z-index: 10;
     font-size: 12px;
-    color: var(--text-muted);
+    font-weight: 700;
+    color: var(--text-dim);
 }
 
 /* Settings Card */

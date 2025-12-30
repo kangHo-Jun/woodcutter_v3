@@ -15,54 +15,77 @@
 
 <body>
     <div class="app-container">
-        <!-- Step Indicator -->
+        <!-- Unified Header -->
         <header class="app-header">
-            <div class="logo">대장간 <span class="version">V3</span></div>
-            <div class="step-indicator">
-                <span class="step active" data-step="1">설정</span>
-                <span class="step-dot"></span>
-                <span class="step" data-step="2">입력</span>
-                <span class="step-dot"></span>
-                <span class="step" data-step="3">결과</span>
-            </div>
+            <h1 class="logo">대장간 <span class="v-badge">V3</span></h1>
+            <nav class="step-nav">
+                <span class="nav-item active" data-step="1">설정</span>
+                <span class="nav-separator">·</span>
+                <span class="nav-item" data-step="2">입력</span>
+                <span class="nav-separator">·</span>
+                <span class="nav-item" data-step="3">결과</span>
+            </nav>
         </header>
 
-        <!-- Step 1: Board Size (Simplified) -->
+        <!-- Step 1: Board Settings -->
         <section class="screen active" id="step1">
             <div class="screen-content">
-                <h2 class="screen-title" style="margin-top: var(--space-xl); text-align: center;">원판 크기</h2>
-                <p class="section-subtitle"
-                    style="text-align: center; color: var(--text-dim); margin-bottom: var(--space-xl);">재단할 원판 사이즈를
-                    입력하세요</p>
+                <div class="setting-group-main">
+                    <h2 class="section-title">원판 크기</h2>
+                    <p class="section-desc">재단할 원판 사이즈를 입력하세요</p>
 
-                <!-- Board Input Fields (One Row) -->
-                <div class="input-display board-input-row">
-                    <div class="input-field active" data-board-field="boardWidth">
-                        <span class="field-label">가로</span>
-                        <span class="field-value"><span id="displayBoardWidth">2400</span><span
-                                class="field-unit">mm</span></span>
+                    <div class="input-display board-input-row">
+                        <div class="input-field-wrap" data-board-field="boardWidth">
+                            <div class="input-field-mini">
+                                <span class="field-val" id="displayBoardWidth">2440</span>
+                                <span class="field-unit">mm</span>
+                            </div>
+                            <label class="field-lbl">가로</label>
+                        </div>
+                        <div class="input-sep">×</div>
+                        <div class="input-field-wrap" data-board-field="boardHeight">
+                            <div class="input-field-mini">
+                                <span class="field-val" id="displayBoardHeight">1220</span>
+                                <span class="field-unit">mm</span>
+                            </div>
+                            <label class="field-lbl">세로</label>
+                        </div>
                     </div>
-                    <div class="input-separator-x">×</div>
-                    <div class="input-field" data-board-field="boardHeight">
-                        <span class="field-label">세로</span>
-                        <span class="field-value"><span id="displayBoardHeight">1220</span><span
-                                class="field-unit">mm</span></span>
+
+                    <!-- Grain Consideration Toggle -->
+                    <div class="grain-setting-card" id="boardGrainToggle">
+                        <div class="grain-info">
+                            <span class="grain-icon">🌾</span>
+                            <div class="grain-text">
+                                <span class="grain-title">결고려</span>
+                                <span class="grain-sub">나무결 방향 맞춰 배치</span>
+                            </div>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="boardRotatable" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+
+                    <!-- Visual Preview of Board -->
+                    <div class="board-preview-area">
+                        <div class="board-canvas-mini" id="boardPreview">
+                            <div class="grain-pattern"></div>
+                            <div class="board-label">자유 회전</div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Hidden inputs for logic compatibility -->
-                <input type="number" id="boardWidth" value="2400" class="hidden">
+                <input type="number" id="boardWidth" value="2440" class="hidden">
                 <input type="number" id="boardHeight" value="1220" class="hidden">
                 <input type="number" id="boardThickness" value="18" class="hidden">
-                <input type="number" id="kerfInput" value="4.2" class="hidden">
-                <input type="checkbox" id="preCutting" class="hidden">
+                <input type="number" id="kerfInput" value="4" class="hidden">
             </div>
 
-            <div class="screen-footer">
-                <button class="btn btn-primary btn-lg" id="toStep2Btn">
-                    다음
-                </button>
-            </div>
+            <footer class="screen-footer">
+                <button class="btn btn-primary btn-lg" id="toStep2Btn">다음: 부품 입력 →</button>
+            </footer>
         </section>
 
         <!-- Step 2: Parts Input -->
@@ -163,49 +186,46 @@
             </div>
         </div>
 
-        <!-- Step 3: Results (Bottom Sheet Style) -->
-        <section class="screen result-screen" id="step3">
-            <div class="result-content">
-                <!-- Top Summary Bar -->
-                <div class="result-summary-bar">
-                    <div class="summary-card">
-                        <span class="summary-icon">💰</span>
-                        <span class="summary-val" id="statCost">0원</span>
-                        <span class="summary-lbl">예상 비용</span>
-                    </div>
-                    <div class="summary-card">
-                        <span class="summary-icon">✂️</span>
-                        <span class="summary-val" id="statCuts">0회</span>
-                        <span class="summary-lbl">절단 횟수</span>
-                    </div>
-                    <div class="summary-card">
-                        <span class="summary-icon">📦</span>
-                        <span class="summary-val" id="statBoards">0장</span>
-                        <span class="summary-lbl">사용 원판</span>
-                    </div>
+        <!-- Step 3: Optimization Results -->
+        <section class="screen" id="step3">
+            <!-- Icon Summary Bar -->
+            <div class="result-summary-bar">
+                <div class="summary-item">
+                    <span class="icon">💰</span>
+                    <span class="value" id="resCost">0원</span>
                 </div>
-
-                <div class="result-inner">
-                    <div class="board-label" id="boardSizeLabel">1220 × 2440 mm</div>
-
-                    <div class="result-canvas-wrapper">
-                        <canvas id="resultCanvas"></canvas>
-                    </div>
-
-                    <div class="canvas-controls">
-                        <button class="canvas-ctrl" id="prevBoard">◀</button>
-                        <span class="board-indicator" id="boardIndicator">1/1</span>
-                        <button class="canvas-ctrl" id="nextBoard">▶</button>
-                    </div>
-
-                    <div class="efficiency-text">배치 효율 <span class="efficiency-val" id="statEfficiency">0%</span></div>
+                <div class="summary-item">
+                    <span class="icon">✂️</span>
+                    <span class="value" id="resCuts">0회</span>
+                </div>
+                <div class="summary-item">
+                    <span class="icon">📦</span>
+                    <span class="value" id="resBoards">0장</span>
                 </div>
             </div>
 
-            <div class="screen-footer triple">
-                <button class="btn btn-secondary" id="backToInputBtn">이전</button>
-                <button class="btn btn-share" id="shareBtn">공유</button>
-                <button class="btn btn-primary" id="downloadPdfBtn">PDF</button>
+            <div class="screen-content scrollable">
+                <!-- Layout Canvas Area -->
+                <div class="canvas-container-wrap">
+                    <div class="canvas-header">
+                        <button class="nav-arrow" id="prevBoard">◀</button>
+                        <div class="board-info">
+                            <span class="board-page" id="boardPage">1/1</span>
+                            <span class="board-eff" id="boardEfficiency">효율 0.0%</span>
+                        </div>
+                        <button class="nav-arrow" id="nextBoard">▶</button>
+                    </div>
+                    <div id="canvas-container"></div>
+                </div>
+
+                <!-- Navigation Grid Buttons -->
+                <div class="result-actions-grid">
+                    <button class="btn btn-outline" id="backToInputBtn">← 다시입력</button>
+                    <button class="btn btn-outline" id="homeBtn">🏠 새작업</button>
+                    <button class="btn btn-outline" id="viewPdfBtn">📄 PDF보기</button>
+                </div>
+
+                <button class="btn btn-primary btn-share-main" id="shareBtn">📤 공유하기</button>
             </div>
         </section>
     </div>
