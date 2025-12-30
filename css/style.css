@@ -428,6 +428,37 @@ body {
     overflow-y: auto;
 }
 
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 120px;
+    color: var(--text-dim);
+}
+
+.empty-icon {
+    font-size: 32px;
+    margin-bottom: var(--space-sm);
+}
+
+.empty-text {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.empty-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.empty-state.hidden {
+    display: none;
+}
+
 .calculate-action-area {
     margin: var(--space-md) 0;
     flex-shrink: 0;

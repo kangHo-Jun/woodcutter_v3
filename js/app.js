@@ -333,7 +333,12 @@ class CuttingAppMobile {
                 return;
 
             case 'done':
-                this.setKeypadVisibility(false);
+                // UI Enhancement: Auto-transition width → height → close
+                if (this.currentStep === 2 && this.currentField === 'width') {
+                    this.selectField('height', false, true);
+                } else {
+                    this.setKeypadVisibility(false);
+                }
                 return;
 
             case '00':
@@ -442,17 +447,29 @@ class CuttingAppMobile {
 
     renderPartsList() {
         const container = document.getElementById('partsList');
+        const emptyState = document.getElementById('emptyState');
         if (!container) return;
 
-        container.innerHTML = this.parts.map((part, index) => `
-            <div class="part-item">
-                <span class="part-info">
-                    ${part.width}×${part.height}
-                    <span class="part-qty">×${part.qty}</span>
-                </span>
-                <button class="part-delete" onclick="app.removePart(${index})">×</button>
-            </div>
-        `).join('');
+        // Toggle empty state visibility
+        if (this.parts.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" id="emptyState">
+                    <span class="empty-icon">📦</span>
+                    <span class="empty-text">아직 부품이 없습니다</span>
+                    <span class="empty-hint">아래에서 추가해주세요 ↓</span>
+                </div>
+            `;
+        } else {
+            container.innerHTML = this.parts.map((part, index) => `
+                <div class="part-item">
+                    <span class="part-info">
+                        ${part.width}×${part.height}
+                        <span class="part-qty">×${part.qty}</span>
+                    </span>
+                    <button class="part-delete" onclick="app.removePart(${index})">×</button>
+                </div>
+            `).join('');
+        }
 
         const totalParts = this.parts.reduce((sum, p) => sum + p.qty, 0);
         document.getElementById('partsCount').textContent = `절단 ${totalParts}개`;
