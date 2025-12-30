@@ -54,9 +54,12 @@ class CuttingAppMobile {
         // Grain Toggle (Step 2)
         document.getElementById('grainToggle')?.addEventListener('click', () => this.toggleGrain());
 
-        // Keypad Keys
+        // Keypad Keys (with haptic feedback)
         document.querySelectorAll('.key').forEach(key => {
-            key.addEventListener('click', (e) => this.handleKeyPress(e.currentTarget.dataset.key));
+            key.addEventListener('click', (e) => {
+                this.haptic('light');
+                this.handleKeyPress(e.currentTarget.dataset.key);
+            });
         });
 
         // Keypad Done Button
@@ -447,7 +450,6 @@ class CuttingAppMobile {
 
     renderPartsList() {
         const container = document.getElementById('partsList');
-        const emptyState = document.getElementById('emptyState');
         if (!container) return;
 
         // Toggle empty state visibility
@@ -461,18 +463,54 @@ class CuttingAppMobile {
             `;
         } else {
             container.innerHTML = this.parts.map((part, index) => `
-                <div class="part-item">
-                    <span class="part-info">
-                        ${part.width}×${part.height}
-                        <span class="part-qty">×${part.qty}</span>
-                    </span>
-                    <button class="part-delete" onclick="app.removePart(${index})">×</button>
+                <div class="part-item-wrap" data-index="${index}">
+                    <div class="part-item swipeable">
+                        <span class="part-info">
+                            ${part.width}×${part.height}
+                            <span class="part-qty">×${part.qty}</span>
+                        </span>
+                    </div>
+                    <button class="swipe-delete-btn" onclick="app.removePart(${index})">삭제</button>
                 </div>
             `).join('');
+
+            // Bind swipe events
+            this.bindSwipeEvents();
         }
 
         const totalParts = this.parts.reduce((sum, p) => sum + p.qty, 0);
         document.getElementById('partsCount').textContent = `절단 ${totalParts}개`;
+    }
+
+    bindSwipeEvents() {
+        document.querySelectorAll('.part-item-wrap').forEach(wrap => {
+            let startX = 0;
+            let currentX = 0;
+            const item = wrap.querySelector('.part-item');
+
+            wrap.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                item.style.transition = 'none';
+            });
+
+            wrap.addEventListener('touchmove', (e) => {
+                currentX = e.touches[0].clientX;
+                const diff = currentX - startX;
+                if (diff < 0) {
+                    item.style.transform = `translateX(${Math.max(diff, -80)}px)`;
+                }
+            });
+
+            wrap.addEventListener('touchend', () => {
+                item.style.transition = 'transform 0.2s ease';
+                const diff = currentX - startX;
+                if (diff < -40) {
+                    item.style.transform = 'translateX(-80px)';
+                } else {
+                    item.style.transform = 'translateX(0)';
+                }
+            });
+        });
     }
 
     removePart(index) {
@@ -634,6 +672,16 @@ class CuttingAppMobile {
     // ============================================
     // Utilities
     // ============================================
+
+    haptic(type = 'light') {
+        if (!navigator.vibrate) return;
+        switch (type) {
+            case 'light': navigator.vibrate(10); break;
+            case 'medium': navigator.vibrate(20); break;
+            case 'success': navigator.vibrate([10, 50, 10]); break;
+            case 'error': navigator.vibrate([50, 50, 50]); break;
+        }
+    }
 
     showToast(message, type = 'info') {
         // Simple toast implementation
