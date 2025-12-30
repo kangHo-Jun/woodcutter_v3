@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1A1A1A">
+    <title>대장간 V3</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Step Indicator -->
+        <header class="app-header">
+            <div class="logo">대장간 <span class="version">V3</span></div>
+            <div class="step-indicator">
+                <span class="step active" data-step="1">설정</span>
+                <span class="step-dot"></span>
+                <span class="step" data-step="2">입력</span>
+                <span class="step-dot"></span>
+                <span class="step" data-step="3">결과</span>
+            </div>
+        </header>
+
+        <!-- Step 1: Board Size (Simplified) -->
+        <section class="screen active" id="step1">
+            <div class="screen-content">
+                <h2 class="screen-title" style="margin-top: var(--space-xl); text-align: center;">원판 크기</h2>
+                <p class="section-subtitle"
+                    style="text-align: center; color: var(--text-dim); margin-bottom: var(--space-xl);">재단할 원판 사이즈를
+                    입력하세요</p>
+
+                <!-- Board Input Fields (One Row) -->
+                <div class="input-display board-input-row">
+                    <div class="input-field active" data-board-field="boardWidth">
+                        <span class="field-label">가로</span>
+                        <span class="field-value"><span id="displayBoardWidth">2400</span><span
+                                class="field-unit">mm</span></span>
+                    </div>
+                    <div class="input-separator-x">×</div>
+                    <div class="input-field" data-board-field="boardHeight">
+                        <span class="field-label">세로</span>
+                        <span class="field-value"><span id="displayBoardHeight">1220</span><span
+                                class="field-unit">mm</span></span>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for logic compatibility -->
+                <input type="number" id="boardWidth" value="2400" class="hidden">
+                <input type="number" id="boardHeight" value="1220" class="hidden">
+                <input type="number" id="boardThickness" value="18" class="hidden">
+                <input type="number" id="kerfInput" value="4.2" class="hidden">
+                <input type="checkbox" id="preCutting" class="hidden">
+            </div>
+
+            <div class="screen-footer">
+                <button class="btn btn-primary btn-lg" id="toStep2Btn">
+                    다음
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 2: Parts Input -->
+        <section class="screen" id="step2">
+            <div class="screen-content">
+                <h2 class="screen-title">절단 입력</h2>
+
+                <!-- Input Fields -->
+                <div class="input-display">
+                    <div class="input-field active" data-field="width">
+                        <span class="field-label">가로</span>
+                        <span class="field-value"><span id="inputWidth">800</span><span
+                                class="field-unit">mm</span></span>
+                    </div>
+                    <div class="input-field" data-field="height">
+                        <span class="field-label">세로</span>
+                        <span class="field-value"><span id="inputHeight">400</span><span
+                                class="field-unit">mm</span></span>
+                    </div>
+                </div>
+
+                <!-- Stepper for Quantity -->
+                <div class="stepper-title">수량 선택</div>
+                <div class="stepper-container">
+                    <button class="stepper-btn" onclick="app.changeQty(-1)">−</button>
+                    <div class="stepper-value-wrap">
+                        <span class="stepper-value" id="displayQty">1</span>
+                        <span class="stepper-unit">개</span>
+                    </div>
+                    <button class="stepper-btn" onclick="app.changeQty(1)">+</button>
+                </div>
+
+                <!-- Parts List -->
+                <div class="parts-section">
+                    <div class="parts-header">
+                        <span class="parts-count" id="partsCount">절단 0개</span>
+                        <button class="link-btn" id="clearAllBtn">전체삭제</button>
+                    </div>
+                    <div class="parts-list" id="partsList">
+                        <!-- Dynamic parts will be added here -->
+                    </div>
+                </div>
+
+                <!-- Grain Direction Toggle -->
+                <div class="option-row">
+                    <span class="option-label">결방향 무관</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="partRotatable" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="screen-footer dual">
+                <button class="btn btn-primary btn-calculate" id="addPartBtn">+ 추가하기</button>
+                <button class="btn btn-calculate" id="calculateBtn">최적화 실행</button>
+            </div>
+
+        </section>
+
+        <!-- Custom Keypad (Global) -->
+        <div class="keypad-container hidden">
+            <div class="keypad">
+                <button class="key" data-key="1">1</button>
+                <button class="key" data-key="2">2</button>
+                <button class="key" data-key="3">3</button>
+                <button class="key key-action" data-key="+50">+50</button>
+                <button class="key" data-key="4">4</button>
+                <button class="key" data-key="5">5</button>
+                <button class="key" data-key="6">6</button>
+                <button class="key key-action" data-key="+100">+100</button>
+                <button class="key" data-key="7">7</button>
+                <button class="key" data-key="8">8</button>
+                <button class="key" data-key="9">9</button>
+                <button class="key key-delete" data-key="C">C</button>
+                <button class="key key-double" data-key="00">00</button>
+                <button class="key" data-key="0">0</button>
+                <button class="key key-back" data-key="←">←</button>
+                <button class="key key-next" data-key="next" id="keyNext">입력 완료</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Results (Bottom Sheet Style) -->
+        <section class="screen result-screen" id="step3">
+            <div class="result-content">
+                <!-- Top Summary Bar -->
+                <div class="result-summary-bar">
+                    <div class="summary-card">
+                        <span class="summary-icon">💰</span>
+                        <span class="summary-val" id="statCost">0원</span>
+                        <span class="summary-lbl">예상 비용</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-icon">✂️</span>
+                        <span class="summary-val" id="statCuts">0회</span>
+                        <span class="summary-lbl">절단 횟수</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-icon">📦</span>
+                        <span class="summary-val" id="statBoards">0장</span>
+                        <span class="summary-lbl">사용 원판</span>
+                    </div>
+                </div>
+
+                <div class="result-inner">
+                    <div class="board-label" id="boardSizeLabel">1220 × 2440 mm</div>
+
+                    <div class="result-canvas-wrapper">
+                        <canvas id="resultCanvas"></canvas>
+                    </div>
+
+                    <div class="canvas-controls">
+                        <button class="canvas-ctrl" id="prevBoard">◀</button>
+                        <span class="board-indicator" id="boardIndicator">1/1</span>
+                        <button class="canvas-ctrl" id="nextBoard">▶</button>
+                    </div>
+
+                    <div class="efficiency-text">배치 효율 <span class="efficiency-val" id="statEfficiency">0%</span></div>
+                </div>
+            </div>
+
+            <div class="screen-footer triple">
+                <button class="btn btn-secondary" id="backToInputBtn">이전</button>
+                <button class="btn btn-share" id="shareBtn">공유</button>
+                <button class="btn btn-primary" id="downloadPdfBtn">PDF</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/packer.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
