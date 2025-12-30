@@ -68,81 +68,97 @@
         <!-- Step 2: Parts Input -->
         <section class="screen" id="step2">
             <div class="screen-content">
-                <h2 class="screen-title">절단 입력</h2>
+                <header class="screen-header-simple">
+                    <h2 class="screen-title-small">절단 입력</h2>
+                    <div class="parts-count-badge" id="partsCount">절단 0개</div>
+                </header>
 
-                <!-- Input Fields -->
-                <div class="input-display">
-                    <div class="input-field active" data-field="width">
-                        <span class="field-label">가로</span>
-                        <span class="field-value"><span id="inputWidth">800</span><span
-                                class="field-unit">mm</span></span>
-                    </div>
-                    <div class="input-field" data-field="height">
-                        <span class="field-label">세로</span>
-                        <span class="field-value"><span id="inputHeight">400</span><span
-                                class="field-unit">mm</span></span>
+                <!-- NEW COMPACT INPUT ROW -->
+                <div class="input-row-container">
+                    <div class="input-row">
+                        <!-- Width Input -->
+                        <div class="input-box" data-field="width">
+                            <span class="box-label">가로</span>
+                            <span class="box-value" id="inputWidth">800</span>
+                            <span class="box-unit">mm</span>
+                        </div>
+
+                        <div class="input-separator-mini">×</div>
+
+                        <!-- Height Input -->
+                        <div class="input-box" data-field="height">
+                            <span class="box-label">세로</span>
+                            <span class="box-value" id="inputHeight">400</span>
+                            <span class="box-unit">mm</span>
+                        </div>
+
+                        <!-- Vertical Stepper -->
+                        <div class="vertical-stepper">
+                            <button class="v-step-btn plus" onclick="app.changeQty(1)">+</button>
+                            <div class="v-step-value" id="displayQty">1</div>
+                            <button class="v-step-btn minus" onclick="app.changeQty(-1)">−</button>
+                        </div>
+
+                        <!-- Grain Toggle Card -->
+                        <div class="grain-toggle-card" id="grainToggle">
+                            <div class="grain-icon-wrap">
+                                <div class="grain-pattern-mini"></div>
+                            </div>
+                            <span class="grain-status-text">결 고정</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Stepper for Quantity -->
-                <div class="stepper-title">수량 선택</div>
-                <div class="stepper-container">
-                    <button class="stepper-btn" onclick="app.changeQty(-1)">−</button>
-                    <div class="stepper-value-wrap">
-                        <span class="stepper-value" id="displayQty">1</span>
-                        <span class="stepper-unit">개</span>
-                    </div>
-                    <button class="stepper-btn" onclick="app.changeQty(1)">+</button>
+                <!-- Action Buttons -->
+                <div class="input-actions-row">
+                    <button class="btn btn-secondary-outline" id="calculateBtn">최적화 실행</button>
+                    <button class="btn btn-primary btn-add" id="addPartBtn">
+                        <span class="btn-icon">+</span> 추가하기
+                    </button>
                 </div>
 
-                <!-- Parts List -->
-                <div class="parts-section">
-                    <div class="parts-header">
-                        <span class="parts-count" id="partsCount">절단 0개</span>
-                        <button class="link-btn" id="clearAllBtn">전체삭제</button>
+                <!-- Expanded Parts List -->
+                <div class="parts-section-expanded">
+                    <div class="parts-header-mini">
+                        <span class="section-lbl">목록</span>
+                        <button class="link-btn-danger" id="clearAllBtn">전체삭제</button>
                     </div>
-                    <div class="parts-list" id="partsList">
-                        <!-- Dynamic parts will be added here -->
+                    <div class="parts-list-scroll" id="partsList">
+                        <!-- Dynamic parts -->
                     </div>
-                </div>
-
-                <!-- Grain Direction Toggle -->
-                <div class="option-row">
-                    <span class="option-label">결방향 무관</span>
-                    <label class="toggle">
-                        <input type="checkbox" id="partRotatable" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="screen-footer dual">
-                <button class="btn btn-primary btn-calculate" id="addPartBtn">+ 추가하기</button>
-                <button class="btn btn-calculate" id="calculateBtn">최적화 실행</button>
-            </div>
-
+            <!-- Hidden inputs remain for logic compatibility -->
+            <input type="checkbox" id="partRotatable" class="hidden">
         </section>
 
-        <!-- Custom Keypad (Global) -->
-        <div class="keypad-container hidden">
-            <div class="keypad">
-                <button class="key" data-key="1">1</button>
-                <button class="key" data-key="2">2</button>
-                <button class="key" data-key="3">3</button>
-                <button class="key key-action" data-key="+50">+50</button>
-                <button class="key" data-key="4">4</button>
-                <button class="key" data-key="5">5</button>
-                <button class="key" data-key="6">6</button>
-                <button class="key key-action" data-key="+100">+100</button>
-                <button class="key" data-key="7">7</button>
-                <button class="key" data-key="8">8</button>
-                <button class="key" data-key="9">9</button>
-                <button class="key key-delete" data-key="C">C</button>
-                <button class="key key-double" data-key="00">00</button>
-                <button class="key" data-key="0">0</button>
-                <button class="key key-back" data-key="←">←</button>
-                <button class="key key-next" data-key="next" id="keyNext">입력 완료</button>
+        <!-- Custom Keypad (Popup Style) -->
+        <div class="keypad-popup-overlay hidden" id="keypadOverlay">
+            <div class="keypad-popup">
+                <div class="keypad-header">
+                    <div class="keypad-title">
+                        <span id="keypadFieldLabel">가로 입력</span>
+                        <div class="keypad-current-value">
+                            <span id="keypadPreview">0</span><span class="unit">mm</span>
+                        </div>
+                    </div>
+                    <button class="keypad-done-btn" id="keypadDone">완료</button>
+                </div>
+                <div class="keypad-grid">
+                    <button class="key" data-key="1">1</button>
+                    <button class="key" data-key="2">2</button>
+                    <button class="key" data-key="3">3</button>
+                    <button class="key" data-key="4">4</button>
+                    <button class="key" data-key="5">5</button>
+                    <button class="key" data-key="6">6</button>
+                    <button class="key" data-key="7">7</button>
+                    <button class="key" data-key="8">8</button>
+                    <button class="key" data-key="9">9</button>
+                    <button class="key key-back" data-key="←">←</button>
+                    <button class="key" data-key="0">0</button>
+                    <button class="key key-confirm" data-key="next">✓</button>
+                </div>
             </div>
         </div>
 

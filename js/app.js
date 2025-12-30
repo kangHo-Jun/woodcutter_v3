@@ -44,19 +44,25 @@ class CuttingAppMobile {
             field.addEventListener('click', (e) => this.selectField(e.currentTarget.dataset.boardField, true, true));
         });
 
-        // Remove Grain Toggle listeners as it's deleted from UI
-
-        // Input Fields (Step 2)
-        document.querySelectorAll('.input-field[data-field]').forEach(field => {
-            field.addEventListener('click', (e) => {
+        // Compact Input Boxes (Step 2)
+        document.querySelectorAll('.input-box[data-field]').forEach(box => {
+            box.addEventListener('click', (e) => {
                 this.selectField(e.currentTarget.dataset.field, false, true);
-                this.updateNextButtonText();
             });
         });
 
-        // Keypad
+        // Grain Toggle (Step 2)
+        document.getElementById('grainToggle')?.addEventListener('click', () => this.toggleGrain());
+
+        // Keypad Keys
         document.querySelectorAll('.key').forEach(key => {
             key.addEventListener('click', (e) => this.handleKeyPress(e.currentTarget.dataset.key));
+        });
+
+        // Keypad Done Button
+        document.getElementById('keypadDone')?.addEventListener('click', () => this.setKeypadVisibility(false));
+        document.getElementById('keypadOverlay')?.addEventListener('click', (e) => {
+            if (e.target.id === 'keypadOverlay') this.setKeypadVisibility(false);
         });
 
         // Calculate
@@ -78,21 +84,7 @@ class CuttingAppMobile {
         // Debug Event (Logo click)
         document.querySelector('.logo')?.addEventListener('click', () => this.debug());
 
-        // Step 1: Settings Toggle
-        document.getElementById('toggleSettingsBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            const form = document.getElementById('settingsForm');
-            const link = e.target;
-            if (form.classList.contains('hidden')) {
-                form.classList.remove('hidden');
-                link.textContent = '설정 숨기기 ›';
-            } else {
-                form.classList.add('hidden');
-                link.textContent = '다른 설정 선택 ›';
-            }
-        });
-
-        // Step 1: Sync inputs with summary
+        // Step 1: Settings Sync
         ['boardWidth', 'boardHeight', 'boardThickness', 'kerfInput'].forEach(id => {
             document.getElementById(id)?.addEventListener('input', () => this.updateSettingsSummary());
         });
@@ -142,7 +134,7 @@ class CuttingAppMobile {
         // Initialize Step 2 from Step 3 (No reset, just hide keypad)
         if (step === 2 && prevStep === 3) {
             this.setKeypadVisibility(false);
-            document.querySelectorAll('.input-field').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.input-box').forEach(f => f.classList.remove('active'));
         }
 
         // Initialize Step 3: Hide keypad
@@ -222,10 +214,10 @@ class CuttingAppMobile {
         this.currentField = field;
 
         // Remove active from all
-        document.querySelectorAll('.input-field').forEach(f => f.classList.remove('active'));
+        document.querySelectorAll('.input-field, .input-box').forEach(f => f.classList.remove('active'));
 
         // Add active to correct one
-        const selector = isBoard ? `[data-board-field="${field}"]` : `[data-field="${field}"]`;
+        const selector = isBoard ? `[data-board-field="${field}"]` : `[data-box-field="${field}"], [data-field="${field}"]`;
         const fieldEl = document.querySelector(selector);
         if (fieldEl) fieldEl.classList.add('active');
 
@@ -234,7 +226,7 @@ class CuttingAppMobile {
             return;
         }
 
-        // Clear field on click as requested: "가로, 세로를 클릭하면 값이 초기화되어야 한다"
+        // Clear field on click as requested
         this.inputValues[field] = '';
         this.updateInputField(field, '');
 
@@ -242,24 +234,35 @@ class CuttingAppMobile {
         if (showKeypad) {
             this.setKeypadVisibility(true);
 
-            // Scroll field into view
-            setTimeout(() => {
-                fieldEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 300);
+            // Update Keypad Header
+            const label = field === 'width' ? '가로 입력' : (field === 'height' ? '세로 입력' : '값 입력');
+            const labelEl = document.getElementById('keypadFieldLabel');
+            if (labelEl) labelEl.textContent = label;
+            this.updateKeypadPreview('');
         }
     }
 
     setKeypadVisibility(visible) {
-        const keypad = document.querySelector('.keypad-container');
-        if (!keypad) return;
+        const overlay = document.getElementById('keypadOverlay');
+        const keypadContainer = document.querySelector('.keypad-container'); // Backward compatibility if any
 
         if (visible) {
-            keypad.classList.remove('hidden');
-            // Resize active screen to avoid overlap
+            overlay?.classList.remove('hidden');
+            keypadContainer?.classList.remove('hidden');
             document.querySelectorAll('.screen').forEach(s => s.classList.add('has-keypad'));
         } else {
-            keypad.classList.add('hidden');
+            overlay?.classList.add('hidden');
+            keypadContainer?.classList.add('hidden');
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('has-keypad'));
+            // Remove selection active state when closing
+            document.querySelectorAll('.input-box').forEach(f => f.classList.remove('active'));
+        }
+    }
+
+    updateKeypadPreview(value) {
+        const previewEl = document.getElementById('keypadPreview');
+        if (previewEl) {
+            previewEl.textContent = value || '0';
         }
     }
 
@@ -339,11 +342,9 @@ class CuttingAppMobile {
                 break;
         }
 
-        // Update display
+        // Update display and preview
         this.updateInputField(this.currentField, this.inputValues[this.currentField]);
-
-        // Update next button text
-        this.updateNextButtonText();
+        this.updateKeypadPreview(this.inputValues[this.currentField]);
     }
 
     handleNext() {
@@ -400,6 +401,27 @@ class CuttingAppMobile {
         this.updateInputField('qty', this.inputValues.qty);
         // Select width but DO NOT OPEN KEYPAD (wait for user)
         this.selectField('width', false, false);
+    }
+
+    toggleGrain() {
+        const checkbox = document.getElementById('partRotatable');
+        const card = document.getElementById('grainToggle');
+        if (!checkbox || !card) return;
+
+        // Toggle logic: checkbox.checked means rotatable (Grain OFF)
+        // Card active means Grain ON (Not rotatable)
+        const isRotatable = checkbox.checked;
+        checkbox.checked = !isRotatable;
+
+        if (checkbox.checked) {
+            // Rotatable = Grain OFF
+            card.classList.remove('active');
+            card.querySelector('.grain-status-text').textContent = '자유 회전';
+        } else {
+            // Not Rotatable = Grain ON
+            card.classList.add('active');
+            card.querySelector('.grain-status-text').textContent = '결 고정';
+        }
     }
 
     renderPartsList() {
