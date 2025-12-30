@@ -1003,6 +1003,64 @@ body {
     color: #00D4AA;
 }
 
+/* UI2: Zoom Controls */
+.result-canvas-wrapper {
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.result-canvas-wrapper:active {
+    cursor: grabbing;
+}
+
+.zoom-controls {
+    position: absolute;
+    bottom: var(--space-md);
+    right: var(--space-md);
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 99px;
+    padding: 4px;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #444;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.zoom-btn:hover {
+    background: #555;
+}
+
+.zoom-btn:active {
+    background: var(--primary);
+}
+
+.zoom-lvl {
+    min-width: 50px;
+    text-align: center;
+    font-size: var(--font-xs);
+    font-weight: 700;
+    color: #fff;
+    user-select: none;
+}
+
 .legend-section {
     margin-top: var(--space-md);
     padding: var(--space-md);

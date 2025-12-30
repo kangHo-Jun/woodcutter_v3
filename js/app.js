@@ -108,6 +108,126 @@ class CuttingAppMobile {
 
         // Step 2: Add Part Button
         document.getElementById('addPartBtn')?.addEventListener('click', () => this.addPart());
+
+        // UI2: Zoom Controls
+        this.initZoomHandlers();
+    }
+
+    initZoomHandlers() {
+        const wrapper = document.querySelector('.result-canvas-wrapper');
+        const zoomLevelEl = document.getElementById('zoomLevel');
+        if (!wrapper) return;
+
+        // Interaction state
+        let isDragging = false;
+        let lastX, lastY;
+        let initialDistance = null;
+        let lastTouchTime = 0;
+
+        const handleZoom = (delta, centerX, centerY) => {
+            if (!this.renderer) return;
+            const prevZoom = this.renderer.zoom;
+            // Limit zoom between 0.5x and 10x
+            this.renderer.zoom = Math.min(Math.max(0.5, this.renderer.zoom + delta), 10);
+
+            if (prevZoom !== this.renderer.zoom) {
+                // Adjust offsets to zoom relative to cursor/center
+                // (Optional but feels better. For now, simple zoom is fine)
+                this.updateZoomUI();
+                this.renderResult();
+            }
+        };
+
+        // Buttons
+        document.getElementById('zoomIn')?.addEventListener('click', () => handleZoom(0.5));
+        document.getElementById('zoomOut')?.addEventListener('click', () => handleZoom(-0.5));
+
+        // Wheel Zoom
+        wrapper.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.2 : -0.2;
+            handleZoom(delta);
+        }, { passive: false });
+
+        // Mouse Pan
+        wrapper.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging || !this.renderer) return;
+            const dx = e.clientX - lastX;
+            const dy = e.clientY - lastY;
+            this.renderer.offsetX += dx;
+            this.renderer.offsetY += dy;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            this.renderResult();
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // Touch Gestures (Pinch & Pan)
+        wrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+
+                // Double Tap Check
+                const now = Date.now();
+                if (now - lastTouchTime < 300) {
+                    // Toggle Zoom (1.0 <-> 3.0)
+                    this.renderer.zoom = this.renderer.zoom > 1.5 ? 1.0 : 3.0;
+                    this.renderer.offsetX = 0;
+                    this.renderer.offsetY = 0;
+                    this.updateZoomUI();
+                    this.renderResult();
+                }
+                lastTouchTime = now;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        }, { passive: true });
+
+        wrapper.addEventListener('touchmove', (e) => {
+            if (!this.renderer) return;
+            if (e.touches.length === 1 && isDragging) {
+                const dx = e.touches[0].clientX - lastX;
+                const dy = e.touches[0].clientY - lastY;
+                this.renderer.offsetX += dx;
+                this.renderer.offsetY += dy;
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+                this.renderResult();
+            } else if (e.touches.length === 2 && initialDistance !== null) {
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const delta = (currentDistance - initialDistance) * 0.01;
+                handleZoom(delta);
+                initialDistance = currentDistance;
+            }
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', () => {
+            isDragging = false;
+            initialDistance = null;
+        });
+    }
+
+    updateZoomUI() {
+        const zoomLevelEl = document.getElementById('zoomLevel');
+        if (zoomLevelEl && this.renderer) {
+            zoomLevelEl.textContent = `${Math.round(this.renderer.zoom * 100)}%`;
+        }
     }
 
     // ============================================
@@ -721,6 +841,13 @@ class CuttingAppMobile {
         const newIndex = this.currentBoardIndex + delta;
         if (newIndex >= 0 && newIndex < this.lastResult.bins.length) {
             this.currentBoardIndex = newIndex;
+            // Reset zoom/pan when switching boards
+            if (this.renderer) {
+                this.renderer.zoom = 1.0;
+                this.renderer.offsetX = 0;
+                this.renderer.offsetY = 0;
+                this.updateZoomUI();
+            }
             this.renderResult();
         }
     }

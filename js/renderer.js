@@ -12,6 +12,9 @@ class CuttingRenderer {
             '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
             '#BB8FCE', '#85C1E9', '#F8B500', '#00CED1'
         ];
+        this.zoom = 1.0;
+        this.offsetX = 0;
+        this.offsetY = 0;
     }
 
     /**
@@ -19,26 +22,45 @@ class CuttingRenderer {
      * Returns legend array for small parts
      */
     render(binWidth, binHeight, placedItems, kerf = 0) {
-        const scale = this.calculateScale(binWidth, binHeight);
+        const baseScale = this.calculateScale(binWidth, binHeight);
+        const padding = this.padding;
 
-        // 캔버스 크기 조정
-        this.canvas.width = binWidth * scale + this.padding * 2;
-        this.canvas.height = binHeight * scale + this.padding * 2;
+        // Set canvas buffer size based on window size
+        const wrapper = this.canvas.parentElement;
+        const displayWidth = wrapper.clientWidth || window.innerWidth - 40;
+        const displayHeight = (displayWidth * (binHeight / binWidth));
 
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Use high-DPI scaling
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = displayWidth * dpr;
+        this.canvas.height = displayHeight * dpr;
+        this.canvas.style.width = `${displayWidth}px`;
+        this.canvas.style.height = `${displayHeight}px`;
+
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        // Apply Zoom & Pan
+        this.ctx.save();
+        this.ctx.translate(this.offsetX, this.offsetY);
+        this.ctx.scale(this.zoom, this.zoom);
+
+        // Calculate centering and base scale for drawing
+        // We want the board to fit the initial canvas width/height
+        const drawScale = (displayWidth - padding * 2) / binWidth;
 
         // 배경
         this.ctx.fillStyle = '#1a1a2e';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, displayWidth / this.zoom + Math.abs(this.offsetX), displayHeight / this.zoom + Math.abs(this.offsetY));
+        // Note: Simple background fill, can be optimized
 
         // 원판 그리기
-        this.drawBoard(binWidth, binHeight, scale);
+        this.drawBoard(binWidth, binHeight, drawScale);
 
         // UI2: Build sizeMap for small parts (< 200x200)
         const sizeMap = {};
         const legend = [];
         let numCounter = 1;
-        const sizeCounts = {};
 
         placedItems.forEach(item => {
             const w = item.isRotated ? item.height : item.width;
@@ -48,32 +70,33 @@ class CuttingRenderer {
             if (w < 200 && h < 200) {
                 if (sizeMap[key] === undefined) {
                     sizeMap[key] = numCounter;
-                    legend.push({ num: numCounter, width: w, height: h, count: 0 });
+                    legend.push({ id: numCounter, width: w, height: h, count: 0 });
                     numCounter++;
                 }
-                // Count occurrences
-                const legendItem = legend.find(l => l.num === sizeMap[key]);
-                if (legendItem) legendItem.count++;
+                const l = legend.find(x => x.id === sizeMap[key]);
+                if (l) l.count++;
             }
         });
 
-        // 부품들 그리기
         placedItems.forEach((item, index) => {
-            this.drawPart(item, scale, index, sizeMap);
+            this.drawPart(item, drawScale, index, sizeMap);
         });
 
         // 치수 표시
-        this.drawDimensions(binWidth, binHeight, scale);
+        this.drawDimensions(binWidth, binHeight, drawScale);
+
+        this.ctx.restore();
 
         return legend;
     }
 
     calculateScale(binWidth, binHeight) {
-        const maxWidth = Math.min(800, window.innerWidth - 80);
+        // This is now used as a reference or for calculating base fitting
+        const maxWidth = window.innerWidth - 40;
         const maxHeight = 500;
         const scaleX = (maxWidth - this.padding * 2) / binWidth;
         const scaleY = (maxHeight - this.padding * 2) / binHeight;
-        return Math.min(scaleX, scaleY, 0.5);
+        return Math.min(scaleX, scaleY, 1.0);
     }
 
     drawBoard(width, height, scale) {
@@ -211,18 +234,21 @@ class CuttingRenderer {
         const originalH = item.isRotated ? item.width : item.height;
         const isSmall = originalW < 200 && originalH < 200;
 
+        // UI2 Requirement F: Small parts show dimensions when zoomed in
+        const showDimensions = !isSmall || this.zoom > 2.5;
+
         if (w > 15 && h > 15) {
             this.ctx.fillStyle = '#333333';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
 
-            if (isSmall && sizeMap[`${originalW}x${originalH}`] !== undefined) {
+            if (!showDimensions && isSmall && sizeMap[`${originalW}x${originalH}`] !== undefined) {
                 // Small part: show circled number
                 const num = sizeMap[`${originalW}x${originalH}`];
                 this.ctx.font = `bold ${Math.max(10, 14 * scale)}px Inter, sans-serif`;
                 this.ctx.fillText(this.getCircledNumber(num), x + w / 2, y + h / 2);
             } else {
-                // Large part: show dimensions
+                // Large part or Zoomed In small part: show dimensions
                 const label = `${originalW}×${originalH}`;
                 this.ctx.font = `bold ${Math.max(12, 16 * scale)}px Inter, sans-serif`;
                 this.ctx.fillText(label, x + w / 2, y + h / 2);
