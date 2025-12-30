@@ -335,12 +335,15 @@ class CuttingAppMobile {
                         this.goToStep(2);
                     }
                 } else {
-                    const fieldOrder = ['width', 'height'];
+                    const fieldOrder = ['width', 'height', 'qty'];
                     const currentIndex = fieldOrder.indexOf(this.currentField);
                     if (currentIndex < fieldOrder.length - 1) {
                         this.selectField(fieldOrder[currentIndex + 1], false, true);
                     } else {
-                        this.addPart();
+                        // If current is qty (or last item), close keypad or add part?
+                        // Usually 'next' on last item should close keypad or add.
+                        // Let's close keypad for now as 'done' handles closure
+                        this.setKeypadVisibility(false);
                     }
                 }
                 return;
