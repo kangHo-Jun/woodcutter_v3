@@ -149,6 +149,7 @@
                     <div class="keypad-large-value">
                         <span id="keypadPreview">0</span><span class="unit">mm</span>
                     </div>
+                    <div class="validation-warning" id="validationWarning"></div>
                 </div>
 
                 <div class="keypad-grid">
@@ -213,6 +214,23 @@
                 <button class="btn btn-primary" id="downloadPdfBtn">📄 PDF</button>
             </div>
         </section>
+    </div>
+
+    <!-- PDF Preview Modal -->
+    <div class="pdf-modal-overlay hidden" id="pdfModal">
+        <div class="pdf-modal">
+            <div class="pdf-modal-header">
+                <span>PDF 미리보기</span>
+                <button class="pdf-close-btn" id="pdfCloseBtn">×</button>
+            </div>
+            <div class="pdf-modal-content">
+                <canvas id="pdfPreviewCanvas"></canvas>
+            </div>
+            <div class="pdf-modal-footer">
+                <button class="btn btn-secondary" id="pdfDownloadBtn">📥 저장</button>
+                <button class="btn btn-primary" id="pdfShareBtn">📤 공유</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->

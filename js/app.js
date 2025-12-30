@@ -29,15 +29,25 @@ class CuttingAppMobile {
     }
 
     bindEvents() {
-        // Step Navigation
+        // Logo Navigation (Go to Step 1)
+        document.querySelector('.logo')?.addEventListener('click', () => this.goToStep(1));
+
+        // Step Tab Navigation
+        document.querySelectorAll('.step-indicator .step').forEach(step => {
+            step.addEventListener('click', (e) => {
+                const targetStep = parseInt(e.currentTarget.dataset.step);
+                if (targetStep === 3 && this.parts.length === 0) {
+                    this.showToast('부품을 먼저 추가해주세요', 'error');
+                    return;
+                }
+                this.goToStep(targetStep);
+            });
+        });
+
+        // Step Navigation Buttons
         document.getElementById('toStep2Btn')?.addEventListener('click', () => this.goToStep(2));
         document.getElementById('toStep1Btn')?.addEventListener('click', () => this.goToStep(1));
         document.getElementById('backToInputBtn')?.addEventListener('click', () => this.goToStep(2));
-
-        // Preset Cards
-        document.querySelectorAll('.preset-card:not(.add-preset)').forEach(card => {
-            card.addEventListener('click', (e) => this.selectPreset(e.currentTarget));
-        });
 
         // Board Selection (Step 1)
         document.querySelectorAll('[data-board-field]').forEach(field => {
@@ -78,14 +88,17 @@ class CuttingAppMobile {
         document.getElementById('prevBoard')?.addEventListener('click', () => this.navigateBoard(-1));
         document.getElementById('nextBoard')?.addEventListener('click', () => this.navigateBoard(1));
 
-        // PDF Download
-        document.getElementById('downloadPdfBtn')?.addEventListener('click', () => this.downloadPDF());
+        // PDF Preview Modal
+        document.getElementById('downloadPdfBtn')?.addEventListener('click', () => this.openPdfModal());
+        document.getElementById('pdfCloseBtn')?.addEventListener('click', () => this.closePdfModal());
+        document.getElementById('pdfDownloadBtn')?.addEventListener('click', () => this.downloadPDF());
+        document.getElementById('pdfShareBtn')?.addEventListener('click', () => this.share());
+        document.getElementById('pdfModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'pdfModal') this.closePdfModal();
+        });
 
         // Share
         document.getElementById('shareBtn')?.addEventListener('click', () => this.share());
-
-        // Debug Event (Logo click)
-        document.querySelector('.logo')?.addEventListener('click', () => this.debug());
 
         // Step 1: Settings Sync
         ['boardWidth', 'boardHeight', 'boardThickness', 'kerfInput'].forEach(id => {
@@ -359,6 +372,41 @@ class CuttingAppMobile {
         // Update display and preview
         this.updateInputField(this.currentField, this.inputValues[this.currentField]);
         this.updateKeypadPreview(this.inputValues[this.currentField]);
+
+        // Validation warning for Step 2 dimensions
+        if (this.currentStep === 2 && (this.currentField === 'width' || this.currentField === 'height')) {
+            this.checkInputValidation();
+        }
+    }
+
+    checkInputValidation() {
+        const boardW = parseInt(document.getElementById('boardWidth').value);
+        const boardH = parseInt(document.getElementById('boardHeight').value);
+        const inputW = parseInt(this.inputValues.width) || 0;
+        const inputH = parseInt(this.inputValues.height) || 0;
+
+        const preview = document.getElementById('keypadPreview');
+        const warning = document.getElementById('validationWarning');
+
+        let isInvalid = false;
+        let message = '';
+
+        if (this.currentField === 'width' && inputW > boardW) {
+            isInvalid = true;
+            message = `⚠️ 원판 가로(${boardW})보다 큼`;
+        } else if (this.currentField === 'height' && inputH > boardH) {
+            isInvalid = true;
+            message = `⚠️ 원판 세로(${boardH})보다 큼`;
+        }
+
+        if (preview) {
+            preview.classList.toggle('invalid', isInvalid);
+        }
+
+        if (warning) {
+            warning.textContent = message;
+            warning.classList.toggle('show', isInvalid);
+        }
     }
 
     handleNext() {
@@ -514,8 +562,43 @@ class CuttingAppMobile {
     }
 
     removePart(index) {
-        this.parts.splice(index, 1);
+        const deleted = this.parts.splice(index, 1)[0];
+        this.lastDeletedPart = { part: deleted, index: index };
         this.renderPartsList();
+        this.showUndoToast(deleted);
+    }
+
+    showUndoToast(part) {
+        const existing = document.querySelector('.undo-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'undo-toast';
+        toast.innerHTML = `
+            <span>${part.width}×${part.height} 삭제됨</span>
+            <button class="undo-btn" onclick="app.undoDelete()">되돌리기</button>
+        `;
+        document.body.appendChild(toast);
+
+        this.undoTimeout = setTimeout(() => {
+            toast.remove();
+            this.lastDeletedPart = null;
+        }, 3000);
+    }
+
+    undoDelete() {
+        if (!this.lastDeletedPart) return;
+
+        clearTimeout(this.undoTimeout);
+        const { part, index } = this.lastDeletedPart;
+        this.parts.splice(index, 0, part);
+        this.renderPartsList();
+        this.lastDeletedPart = null;
+
+        const toast = document.querySelector('.undo-toast');
+        if (toast) toast.remove();
+
+        this.showToast('되돌렸습니다', 'success');
     }
 
     clearParts() {
@@ -618,6 +701,26 @@ class CuttingAppMobile {
     // Export & Share
     // ============================================
 
+    openPdfModal() {
+        const modal = document.getElementById('pdfModal');
+        const previewCanvas = document.getElementById('pdfPreviewCanvas');
+        const sourceCanvas = document.getElementById('resultCanvas');
+
+        if (!modal || !previewCanvas || !sourceCanvas) return;
+
+        // Copy the result canvas to preview
+        const ctx = previewCanvas.getContext('2d');
+        previewCanvas.width = sourceCanvas.width;
+        previewCanvas.height = sourceCanvas.height;
+        ctx.drawImage(sourceCanvas, 0, 0);
+
+        modal.classList.remove('hidden');
+    }
+
+    closePdfModal() {
+        document.getElementById('pdfModal')?.classList.add('hidden');
+    }
+
     downloadPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
@@ -641,9 +744,29 @@ class CuttingAppMobile {
     }
 
     share() {
+        const boardW = document.getElementById('boardWidth').value;
+        const boardH = document.getElementById('boardHeight').value;
         const cost = document.getElementById('statCost').textContent;
         const cuts = document.getElementById('statCuts').textContent;
-        const shareText = `[대장간 V3] 재단 결과\n💰 예상 비용: ${cost}\n✂️ 절단 횟수: ${cuts}\n\n도면 결과가 이미지로 공유되었습니다.`;
+        const boards = document.getElementById('statBoards').textContent;
+        const efficiency = document.getElementById('statEfficiency').textContent;
+
+        // Build parts list text
+        const partsList = this.parts.map(p => `• ${p.width}×${p.height} ×${p.qty}개`).join('\n');
+
+        const shareText = `[대장간 V3 재단 결과]
+
+📐 원판: ${boardW} × ${boardH} mm
+📦 사용 원판: ${boards}
+✂️ 총 절단: ${cuts}
+📊 효율: ${efficiency}
+💰 예상 비용: ${cost}
+
+─────────────────
+부품 목록:
+${partsList}
+
+📎 대장간 V3으로 작성됨`;
 
         // If Web Share API supports files (png from canvas)
         const canvas = document.getElementById('resultCanvas');
