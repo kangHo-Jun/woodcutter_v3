@@ -382,75 +382,123 @@ body {
 }
 
 /* ============================================
-   Step 2: Parts Input (New Compact Design)
+   Step 2: Parts Input (Optimized Fixed-Bottom)
    ============================================ */
+
+.fixed-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-bottom: 100px;
+    /* Room for bottom bar */
+}
 
 .screen-header-simple {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-md);
+    flex-shrink: 0;
 }
 
-.screen-title-small {
+.parts-section-expanded {
+    flex: 1;
+    /* Take all remaining central space */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* Important for flex child scroll */
+    margin-bottom: var(--space-md);
+}
+
+.parts-header-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+    flex-shrink: 0;
+}
+
+.parts-list-scroll {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+    overflow-y: auto;
+}
+
+.calculate-action-area {
+    margin: var(--space-md) 0;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-calculate-main {
+    width: 80%;
+    max-width: 300px;
+    height: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--primary);
+    color: var(--primary);
     font-size: 18px;
     font-weight: 700;
 }
 
-.parts-count-badge {
-    background: var(--bg-input);
-    color: var(--primary);
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 700;
+/* Fixed Bottom Input Bar */
+.bottom-input-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
+    background: #252525;
+    border-top: 1px solid var(--border);
+    padding: 10px var(--space-md);
+    padding-bottom: calc(10px + var(--safe-bottom));
+    z-index: 50;
 }
 
-.input-row-container {
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: var(--space-md);
-    margin-bottom: var(--space-md);
-    border: 1px solid var(--border);
-}
-
-.input-row {
+.input-row-fixed {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
+    height: 100%;
 }
 
-.input-box {
+.input-box-compact {
     flex: 2;
-    background: var(--bg-input);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm);
-    text-align: center;
-    cursor: pointer;
+    background: #333;
+    border-radius: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     border: 2px solid transparent;
     transition: all 0.2s;
-    min-width: 0;
-    /* Allow shrinking */
+    cursor: pointer;
 }
 
-.input-box.active {
+.input-box-compact.active {
     border-color: var(--primary);
     background: rgba(0, 212, 170, 0.1);
 }
 
 .box-label {
-    display: block;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: var(--text-dim);
+    line-height: 1;
     margin-bottom: 2px;
-    text-transform: uppercase;
 }
 
 .box-value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--text-main);
+    line-height: 1;
 }
 
 .box-unit {
@@ -459,89 +507,65 @@ body {
     margin-left: 2px;
 }
 
-.input-separator-mini {
-    color: var(--text-dim);
-    font-weight: 700;
-    font-size: 14px;
-}
-
-/* Vertical Stepper */
 .vertical-stepper {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    background: var(--bg-input);
-    border-radius: var(--radius-md);
-    padding: 4px;
+    justify-content: space-between;
+    background: #333;
+    border-radius: 12px;
     width: 50px;
+    height: 100%;
 }
 
 .v-step-btn {
-    width: 100%;
-    height: 32px;
+    height: 28px;
     background: transparent;
     border: none;
-    color: var(--text-main);
-    font-size: 20px;
-    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 18px;
+    font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.v-step-btn:active {
-    opacity: 0.5;
 }
 
 .v-step-value {
     font-size: 18px;
     font-weight: 800;
     color: var(--primary);
+    text-align: center;
     line-height: 1;
-    margin: 4px 0;
 }
 
-/* Grain Toggle Card */
-.grain-toggle-card {
+.grain-toggle-icon {
     flex: 1.5;
-    background: var(--bg-input);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm);
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: #333;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s;
-    min-width: 70px;
 }
 
-.grain-icon-wrap {
-    width: 32px;
-    height: 32px;
+.grain-icon-box {
+    width: 24px;
+    height: 24px;
     background: #444;
     border-radius: 4px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .grain-pattern-mini {
     width: 100%;
     height: 100%;
-    background: transparent;
-    transition: all 0.3s;
 }
 
-.grain-toggle-card.active .grain-icon-wrap {
+.grain-toggle-icon.active .grain-icon-box {
     background: #8B4513;
-    /* Wood-like color */
 }
 
-.grain-toggle-card.active .grain-pattern-mini {
+.grain-toggle-icon.active .grain-pattern-mini {
     background-image: repeating-linear-gradient(0deg,
             transparent,
             transparent 4px,
@@ -549,83 +573,30 @@ body {
             rgba(0, 0, 0, 0.2) 6px);
 }
 
-.grain-status-text {
-    font-size: 10px;
-    font-weight: 700;
+.grain-label-tiny {
+    font-size: 9px;
+    font-weight: 600;
     color: var(--text-dim);
 }
 
-.grain-toggle-card.active .grain-status-text {
+.grain-toggle-icon.active .grain-label-tiny {
     color: var(--primary);
 }
 
-/* Input Actions */
-.input-actions-row {
-    display: flex;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
-}
-
-.btn-secondary-outline {
-    flex: 1;
-    background: transparent;
-    border: 2px solid var(--border);
-    color: var(--text-muted);
-}
-
-.btn-add {
-    flex: 1.5;
-    font-size: 18px;
-}
-
-.btn-icon {
-    font-size: 24px;
-    margin-right: 6px;
-    font-weight: 400;
-}
-
-/* Expanded Parts List */
-.parts-section-expanded {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 200px;
-}
-
-.parts-header-mini {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-sm);
-}
-
-.section-lbl {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.link-btn-danger {
-    background: none;
+.btn-add-compact {
+    width: 50px;
+    height: 100%;
+    background: var(--primary);
+    color: var(--bg-main);
+    border-radius: 12px;
+    font-size: 32px;
+    font-weight: 300;
     border: none;
-    color: var(--danger);
-    font-size: 12px;
-    font-weight: 600;
     cursor: pointer;
 }
 
-.parts-list-scroll {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm);
-    overflow-y: auto;
-}
-
 /* ============================================
-   Popup Keypad
+   Popup Keypad (High Visibility)
    ============================================ */
 
 .keypad-popup-overlay {
@@ -634,87 +605,69 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
     z-index: 1000;
-    display: flex;
-    align-items: flex-end;
-}
-
-.keypad-popup {
-    width: 100%;
-    background: #252525;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-    padding: var(--space-lg);
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
-}
-
-.keypad-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--space-lg);
-}
-
-.keypad-title {
     display: flex;
     flex-direction: column;
 }
 
-.keypad-title span {
-    font-size: 14px;
-    color: var(--text-dim);
-    font-weight: 600;
+.keypad-display-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
 }
 
-.keypad-current-value {
-    font-size: 32px;
+.keypad-field-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.keypad-large-value {
+    font-size: 72px;
     font-weight: 800;
     color: var(--primary);
+    line-height: 1;
 }
 
-.keypad-current-value .unit {
-    font-size: 16px;
-    margin-left: 4px;
+.keypad-large-value .unit {
+    font-size: 24px;
     color: var(--text-dim);
+    margin-left: 8px;
 }
 
-.keypad-done-btn {
-    background: var(--primary);
-    color: var(--bg-main);
-    border: none;
-    padding: 12px 24px;
-    border-radius: var(--radius-md);
-    font-size: 16px;
-    font-weight: 700;
+.keypad-popup {
+    width: 100%;
+    background: #1A1A1A;
+    border-top: 1px solid var(--border);
+    padding: var(--space-md);
+    padding-bottom: calc(var(--space-md) + var(--safe-bottom));
+    height: 40%;
 }
 
 .keypad-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr);
     gap: var(--space-sm);
+    height: 100%;
 }
 
 .keypad-grid .key {
-    height: 64px;
-    background: #333;
+    background: #2D2D2D;
+    color: white;
+    font-size: 28px;
+    font-weight: 600;
     border: none;
     border-radius: 12px;
-    color: white;
-    font-size: 24px;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .key-confirm {
@@ -723,7 +676,7 @@ body {
 }
 
 .key-back {
-    background: #444 !important;
+    color: var(--danger) !important;
 }
 
 /* Parts List */

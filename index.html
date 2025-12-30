@@ -67,57 +67,13 @@
 
         <!-- Step 2: Parts Input -->
         <section class="screen" id="step2">
-            <div class="screen-content">
+            <div class="screen-content fixed-layout">
                 <header class="screen-header-simple">
                     <h2 class="screen-title-small">절단 입력</h2>
                     <div class="parts-count-badge" id="partsCount">절단 0개</div>
                 </header>
 
-                <!-- NEW COMPACT INPUT ROW -->
-                <div class="input-row-container">
-                    <div class="input-row">
-                        <!-- Width Input -->
-                        <div class="input-box" data-field="width">
-                            <span class="box-label">가로</span>
-                            <span class="box-value" id="inputWidth">800</span>
-                            <span class="box-unit">mm</span>
-                        </div>
-
-                        <div class="input-separator-mini">×</div>
-
-                        <!-- Height Input -->
-                        <div class="input-box" data-field="height">
-                            <span class="box-label">세로</span>
-                            <span class="box-value" id="inputHeight">400</span>
-                            <span class="box-unit">mm</span>
-                        </div>
-
-                        <!-- Vertical Stepper -->
-                        <div class="vertical-stepper">
-                            <button class="v-step-btn plus" onclick="app.changeQty(1)">+</button>
-                            <div class="v-step-value" id="displayQty">1</div>
-                            <button class="v-step-btn minus" onclick="app.changeQty(-1)">−</button>
-                        </div>
-
-                        <!-- Grain Toggle Card -->
-                        <div class="grain-toggle-card" id="grainToggle">
-                            <div class="grain-icon-wrap">
-                                <div class="grain-pattern-mini"></div>
-                            </div>
-                            <span class="grain-status-text">결 고정</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="input-actions-row">
-                    <button class="btn btn-secondary-outline" id="calculateBtn">최적화 실행</button>
-                    <button class="btn btn-primary btn-add" id="addPartBtn">
-                        <span class="btn-icon">+</span> 추가하기
-                    </button>
-                </div>
-
-                <!-- Expanded Parts List -->
+                <!-- Expanded Parts List (Dominant Area) -->
                 <div class="parts-section-expanded">
                     <div class="parts-header-mini">
                         <span class="section-lbl">목록</span>
@@ -127,24 +83,69 @@
                         <!-- Dynamic parts -->
                     </div>
                 </div>
+
+                <!-- Run Optimization (Floating above input bar) -->
+                <div class="calculate-action-area">
+                    <button class="btn btn-calculate-main" id="calculateBtn">최적화 실행</button>
+                </div>
+            </div>
+
+            <!-- FIXED BOTTOM INPUT BAR -->
+            <div class="bottom-input-bar">
+                <div class="input-row-fixed">
+                    <!-- Width Input -->
+                    <div class="input-box-compact" data-field="width">
+                        <span class="box-label">가로</span>
+                        <span class="box-value" id="inputWidth">800</span>
+                        <span class="box-unit">mm</span>
+                    </div>
+
+                    <div class="input-separator-x">×</div>
+
+                    <!-- Height Input -->
+                    <div class="input-box-compact" data-field="height">
+                        <span class="box-label">세로</span>
+                        <span class="box-value" id="inputHeight">400</span>
+                        <span class="box-unit">mm</span>
+                    </div>
+
+                    <div class="input-separator-x">×</div>
+
+                    <!-- Vertical Stepper -->
+                    <div class="vertical-stepper">
+                        <button class="v-step-btn plus" onclick="app.changeQty(1)">+</button>
+                        <div class="v-step-value" id="displayQty">1</div>
+                        <button class="v-step-btn minus" onclick="app.changeQty(-1)">−</button>
+                    </div>
+
+                    <!-- Grain Toggle Card -->
+                    <div class="grain-toggle-icon" id="grainToggle">
+                        <div class="grain-icon-box">
+                            <div class="grain-pattern-mini"></div>
+                        </div>
+                        <span class="grain-label-tiny">결 고정</span>
+                    </div>
+
+                    <!-- Add Button -->
+                    <button class="btn btn-add-compact" id="addPartBtn">+</button>
+                </div>
             </div>
 
             <!-- Hidden inputs remain for logic compatibility -->
-            <input type="checkbox" id="partRotatable" class="hidden">
+            <input type="checkbox" id="partRotatable" checked class="hidden">
         </section>
 
         <!-- Custom Keypad (Popup Style) -->
         <div class="keypad-popup-overlay hidden" id="keypadOverlay">
             <div class="keypad-popup">
-                <div class="keypad-header">
-                    <div class="keypad-title">
-                        <span id="keypadFieldLabel">가로 입력</span>
-                        <div class="keypad-current-value">
-                            <span id="keypadPreview">0</span><span class="unit">mm</span>
-                        </div>
+                <!-- Large Input Display Area -->
+                <div class="keypad-display-section">
+                    <div class="keypad-field-name" id="keypadFieldLabel">가로</div>
+                    <div class="keypad-large-value">
+                        <span id="keypadPreview">0</span><span class="unit">mm</span>
                     </div>
-                    <button class="keypad-done-btn" id="keypadDone">완료</button>
                 </div>
+
                 <div class="keypad-grid">
                     <button class="key" data-key="1">1</button>
                     <button class="key" data-key="2">2</button>
@@ -157,7 +158,7 @@
                     <button class="key" data-key="9">9</button>
                     <button class="key key-back" data-key="←">←</button>
                     <button class="key" data-key="0">0</button>
-                    <button class="key key-confirm" data-key="next">✓</button>
+                    <button class="key key-confirm" data-key="done">✓</button>
                 </div>
             </div>
         </div>

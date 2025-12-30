@@ -45,7 +45,7 @@ class CuttingAppMobile {
         });
 
         // Compact Input Boxes (Step 2)
-        document.querySelectorAll('.input-box[data-field]').forEach(box => {
+        document.querySelectorAll('.input-box-compact[data-field]').forEach(box => {
             box.addEventListener('click', (e) => {
                 this.selectField(e.currentTarget.dataset.field, false, true);
             });
@@ -134,7 +134,11 @@ class CuttingAppMobile {
         // Initialize Step 2 from Step 3 (No reset, just hide keypad)
         if (step === 2 && prevStep === 3) {
             this.setKeypadVisibility(false);
-            document.querySelectorAll('.input-box').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.input-box-compact').forEach(f => f.classList.remove('active'));
+        }
+
+        if (step === 2) {
+            this.updateGrainUI();
         }
 
         // Initialize Step 3: Hide keypad
@@ -214,10 +218,10 @@ class CuttingAppMobile {
         this.currentField = field;
 
         // Remove active from all
-        document.querySelectorAll('.input-field, .input-box').forEach(f => f.classList.remove('active'));
+        document.querySelectorAll('.input-field, .input-box, .input-box-compact').forEach(f => f.classList.remove('active'));
 
         // Add active to correct one
-        const selector = isBoard ? `[data-board-field="${field}"]` : `[data-box-field="${field}"], [data-field="${field}"]`;
+        const selector = isBoard ? `[data-board-field="${field}"]` : `[data-field="${field}"]`;
         const fieldEl = document.querySelector(selector);
         if (fieldEl) fieldEl.classList.add('active');
 
@@ -235,7 +239,7 @@ class CuttingAppMobile {
             this.setKeypadVisibility(true);
 
             // Update Keypad Header
-            const label = field === 'width' ? '가로 입력' : (field === 'height' ? '세로 입력' : '값 입력');
+            const label = field === 'width' ? '가로' : (field === 'height' ? '세로' : '값 입력');
             const labelEl = document.getElementById('keypadFieldLabel');
             if (labelEl) labelEl.textContent = label;
             this.updateKeypadPreview('');
@@ -244,18 +248,16 @@ class CuttingAppMobile {
 
     setKeypadVisibility(visible) {
         const overlay = document.getElementById('keypadOverlay');
-        const keypadContainer = document.querySelector('.keypad-container'); // Backward compatibility if any
 
         if (visible) {
             overlay?.classList.remove('hidden');
-            keypadContainer?.classList.remove('hidden');
             document.querySelectorAll('.screen').forEach(s => s.classList.add('has-keypad'));
+            // Center active box view if needed
         } else {
             overlay?.classList.add('hidden');
-            keypadContainer?.classList.add('hidden');
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('has-keypad'));
             // Remove selection active state when closing
-            document.querySelectorAll('.input-box').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.input-box-compact').forEach(f => f.classList.remove('active'));
         }
     }
 
@@ -328,6 +330,10 @@ class CuttingAppMobile {
                         this.addPart();
                     }
                 }
+                return;
+
+            case 'done':
+                this.setKeypadVisibility(false);
                 return;
 
             case '00':
@@ -413,14 +419,24 @@ class CuttingAppMobile {
         const isRotatable = checkbox.checked;
         checkbox.checked = !isRotatable;
 
+        this.updateGrainUI();
+    }
+
+    updateGrainUI() {
+        const checkbox = document.getElementById('partRotatable');
+        const card = document.getElementById('grainToggle');
+        const labelEl = card?.querySelector('.grain-label-tiny') || card?.querySelector('.grain-status-text');
+
+        if (!checkbox || !card || !labelEl) return;
+
         if (checkbox.checked) {
-            // Rotatable = Grain OFF
+            // Rotatable = Grain OFF (Free)
             card.classList.remove('active');
-            card.querySelector('.grain-status-text').textContent = '자유 회전';
+            labelEl.textContent = '자유 회전';
         } else {
-            // Not Rotatable = Grain ON
+            // Not Rotatable = Grain ON (Fixed)
             card.classList.add('active');
-            card.querySelector('.grain-status-text').textContent = '결 고정';
+            labelEl.textContent = '결 고정';
         }
     }
 
