@@ -24,32 +24,10 @@ class CuttingAppMobile {
     }
 
     init() {
-        // Debug Logger
-        const debugBox = document.createElement('div');
-        debugBox.id = 'debugLog';
-        debugBox.style.position = 'fixed';
-        debugBox.style.bottom = '10px';
-        debugBox.style.left = '10px';
-        debugBox.style.background = 'rgba(0,0,0,0.8)';
-        debugBox.style.color = 'lime';
-        debugBox.style.fontSize = '10px';
-        debugBox.style.padding = '5px';
-        debugBox.style.zIndex = '9999';
-        debugBox.style.pointerEvents = 'none';
-        document.body.appendChild(debugBox);
-        this.log('App initialized');
-
         this.bindEvents();
         this.updateStepIndicator();
     }
 
-    log(msg) {
-        const box = document.getElementById('debugLog');
-        if (box) {
-            box.innerText = msg + '\n' + box.innerText.slice(0, 100);
-            console.log(msg);
-        }
-    }
 
     bindEvents() {
         // Logo Navigation (Go to Step 1)
@@ -272,7 +250,6 @@ class CuttingAppMobile {
         // Handle Keypad Visibility
         if (showKeypad) {
             this.setKeypadVisibility(true);
-            this.log(`SelectField: ${field} keypad=ON`);
 
             // Update Keypad Header
             const labels = { width: '가로', height: '세로', qty: '개수' };
@@ -323,7 +300,6 @@ class CuttingAppMobile {
             const displayId = `input${field.charAt(0).toUpperCase() + field.slice(1)}`;
             const element = document.getElementById(displayId);
             if (element) {
-                this.log(`UpdateInput: ${field} -> "${value}" (el:${displayId})`);
                 element.textContent = value || '';
                 // Add a placeholder-like state if empty
                 if (!value) element.innerHTML = '<span style="color:var(--text-dim); opacity:0.3">0</span>';
@@ -333,7 +309,6 @@ class CuttingAppMobile {
 
     handleKeyPress(key) {
         let currentValue = this.inputValues[this.currentField];
-        this.log(`Key: ${key} CurField: ${this.currentField} CurVal: "${currentValue}"`);
 
         switch (key) {
             case 'C':
